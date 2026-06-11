@@ -1,0 +1,61 @@
+{
+  "version": "0.1.0",
+  "target": "core.validate",
+  "confidence_score": 0.318,
+  "risk_label": "\ud83d\udfe0 Risky",
+  "direct_callers": [
+    "core.process_data",
+    "test_core.test_validate_empty"
+  ],
+  "direct_caller_count": 2,
+  "transitive_dependents": [
+    "core.process_data",
+    "test_core.test_validate_empty",
+    "api.handle_request",
+    "test_core.test_process_data",
+    "main.main",
+    "test_core.test_handle_request"
+  ],
+  "transitive_dependent_count": 6,
+  "test_functions": [
+    "api.handle_request",
+    "core.process_data",
+    "core.validate",
+    "main.main",
+    "test_core.test_process_data",
+    "test_core.test_validate_empty",
+    "test_core.test_handle_request"
+  ],
+  "test_function_count": 7,
+  "depth_map": {
+    "core.validate": 0,
+    "core.process_data": 1,
+    "test_core.test_validate_empty": 1,
+    "api.handle_request": 2,
+    "test_core.test_process_data": 2,
+    "main.main": 3,
+    "test_core.test_handle_request": 3
+  },
+  "coverage_map": {},
+  "score_breakdown": {
+    "target_coverage": 0.0,
+    "avg_dependent_coverage": 0.0,
+    "fan_out": 2,
+    "fan_out_score": 0.5,
+    "max_depth": 3,
+    "depth_score": 0.431,
+    "test_reachability": 1.0,
+    "weighted_target_cov": 0.0,
+    "weighted_dep_cov": 0.0,
+    "weighted_fan_out": 0.075,
+    "weighted_depth": 0.043,
+    "weighted_test_reach": 0.2
+  },
+  "unresolved_calls": [],
+  "warnings": [],
+  "dead_code": [],
+  "graph_stats": {
+    "total_nodes": 17,
+    "total_edges": 10
+  }
+}
