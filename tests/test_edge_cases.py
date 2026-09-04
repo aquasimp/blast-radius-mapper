@@ -1,4 +1,4 @@
-﻿"""Tests for advanced Python static analysis edge cases: deep MRO, star imports, closures."""
+"""Tests for advanced Python static analysis edge cases: deep MRO, star imports, closures."""
 
 from __future__ import annotations
 
