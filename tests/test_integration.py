@@ -5,7 +5,6 @@ from pathlib import Path
 from blast_radius_mapper.models import AnalysisConfig
 from blast_radius_mapper.pipeline import analyze_project, list_functions
 
-
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "simple_project"
 
 
@@ -67,6 +66,7 @@ class TestEndToEnd:
             json_output_path=tmp_path / "result.json",
         )
         result = analyze_project(config)
+        assert result is not None
 
         json_path = tmp_path / "result.json"
         assert json_path.exists()

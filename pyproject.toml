@@ -56,6 +56,15 @@ warn_return_any = true
 warn_unused_configs = true
 strict = true
 
+[[tool.mypy.overrides]]
+module = [
+    "networkx.*",
+    "pyvis.*",
+    "tree_sitter.*",
+    "tree_sitter_python.*",
+]
+ignore_missing_imports = true
+
 [tool.ruff]
 target-version = "py310"
 line-length = 100

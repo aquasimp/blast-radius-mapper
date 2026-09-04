@@ -1,5 +1,7 @@
 # Blast Radius Mapper
 
+[![CI](https://github.com/aquasimp/blast-radius-mapper/actions/workflows/ci.yml/badge.svg)](https://github.com/aquasimp/blast-radius-mapper/actions/workflows/ci.yml)
+
 **Map the impact of Python code changes before you make them.**
 
 A fully local, function-level static analysis tool that shows you exactly what breaks when you touch a function — direct callers, transitive dependents across the full call chain, test coverage gaps, and a confidence score for making the change safely.

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from typing import Optional
 
 from blast_radius_mapper.logging_config import get_logger
 from blast_radius_mapper.models import FQN
@@ -100,9 +99,7 @@ def resolve_class_bases(
         resolved_bases: list[FQN] = []
 
         for base_name in cls.base_names:
-            resolved = _resolve_base_class(
-                base_name, cls.fqn.module, import_aliases, symbol_table
-            )
+            resolved = _resolve_base_class(base_name, cls.fqn.module, import_aliases, symbol_table)
             if resolved:
                 resolved_bases.append(resolved)
                 resolved_count += 1
@@ -130,7 +127,7 @@ def _resolve_import_base(
     current_module: str,
     node: ast.ImportFrom,
     project_root: Path,
-) -> Optional[str]:
+) -> str | None:
     """
     Resolve the base module of a ``from ... import`` statement.
 
@@ -154,9 +151,9 @@ def _resolve_import_base(
 def _resolve_relative_import(
     current_module: str,
     level: int,
-    target: Optional[str],
+    target: str | None,
     project_root: Path,
-) -> Optional[str]:
+) -> str | None:
     """
     Resolve a relative import.
 
@@ -234,7 +231,7 @@ def _resolve_star_import(module_dotpath: str, project_root: Path) -> list[str]:
     return names
 
 
-def _extract_dunder_all(tree: ast.Module) -> Optional[list[str]]:
+def _extract_dunder_all(tree: ast.Module) -> list[str] | None:
     """
     Extract the value of ``__all__`` if it's a simple list/tuple of strings.
 
@@ -244,13 +241,16 @@ def _extract_dunder_all(tree: ast.Module) -> Optional[list[str]]:
         if not isinstance(node, ast.Assign):
             continue
         for target in node.targets:
-            if isinstance(target, ast.Name) and target.id == "__all__":
-                if isinstance(node.value, (ast.List, ast.Tuple)):
-                    names: list[str] = []
-                    for elt in node.value.elts:
-                        if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
-                            names.append(elt.value)
-                    return names
+            if (
+                isinstance(target, ast.Name)
+                and target.id == "__all__"
+                and isinstance(node.value, (ast.List, ast.Tuple))
+            ):
+                names: list[str] = []
+                for elt in node.value.elts:
+                    if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                        names.append(elt.value)
+                return names
     return None
 
 
@@ -262,7 +262,7 @@ def _resolve_base_class(
     module_path: str,
     import_aliases: dict[str, str],
     symbol_table: SymbolTable,
-) -> Optional[FQN]:
+) -> FQN | None:
     """
     Resolve a base class name to an FQN.
 
@@ -272,10 +272,21 @@ def _resolve_base_class(
     3. Dotted name via import (``mod.Bar`` → resolved ``mod`` + ``.Bar``)
     """
     # Skip known builtins that won't be in our symbol table
-    if base_name in ("object", "type", "Exception", "BaseException",
-                     "ValueError", "TypeError", "RuntimeError", "KeyError",
-                     "AttributeError", "NotImplementedError", "StopIteration",
-                     "ABC", "Protocol"):
+    if base_name in (
+        "object",
+        "type",
+        "Exception",
+        "BaseException",
+        "ValueError",
+        "TypeError",
+        "RuntimeError",
+        "KeyError",
+        "AttributeError",
+        "NotImplementedError",
+        "StopIteration",
+        "ABC",
+        "Protocol",
+    ):
         return None
 
     # Check if base_name is a dotted path like "module.Class"
@@ -310,7 +321,7 @@ def _resolve_base_class(
 # ── Internal: Module → filepath ──────────────────────────────────────────────
 
 
-def _module_to_filepath(module_dotpath: str, project_root: Path) -> Optional[Path]:
+def _module_to_filepath(module_dotpath: str, project_root: Path) -> Path | None:
     """
     Convert a module dotpath to a filesystem path.
 

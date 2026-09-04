@@ -11,7 +11,7 @@ from __future__ import annotations
 import ast
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import networkx as nx
 
@@ -85,12 +85,12 @@ def analyze_project(config: AnalysisConfig) -> ImpactResult:
     symbol_table = SymbolTable()
 
     for module_path, tree in all_asts.items():
-        filepath = _module_to_file(module_path, root)
-        if not filepath:
+        maybe_filepath = _module_to_file(module_path, root)
+        if not maybe_filepath:
             continue
 
         functions, classes = extract_definitions(
-            filepath=filepath,
+            filepath=maybe_filepath,
             module_path=module_path,
             tree=tree,
             test_dir_patterns=config.test_dir_patterns,
@@ -133,9 +133,7 @@ def analyze_project(config: AnalysisConfig) -> ImpactResult:
         logger.info("Phase 8: Integrating coverage data...")
         try:
             cov_data = load_coverage_data(config.coverage_path)
-            coverage_map = compute_all_function_coverage(
-                symbol_table, cov_data, root
-            )
+            coverage_map = compute_all_function_coverage(symbol_table, cov_data, root)
             impact.coverage_map = coverage_map
         except (FileNotFoundError, ValueError) as e:
             logger.warning("Coverage integration failed: %s", e)
@@ -159,9 +157,7 @@ def analyze_project(config: AnalysisConfig) -> ImpactResult:
     # ── Phase 12: Render graph ───────────────────────────────────────
     if config.target_function:
         logger.info("Phase 12: Rendering interactive graph...")
-        render_blast_radius_graph(
-            graph, impact, coverage_map, config.output_path
-        )
+        render_blast_radius_graph(graph, impact, coverage_map, config.output_path)
     else:
         logger.info("Phase 12: Rendering full project graph...")
         render_full_graph(graph, coverage_map, config.output_path)
@@ -206,13 +202,19 @@ def list_functions(config: AnalysisConfig) -> list[dict[str, Any]]:
 
     results = []
     for fqn_str, func_info in symbol_table.all_functions():
-        results.append({
-            "fqn": fqn_str,
-            "file": str(func_info.filepath),
-            "line": func_info.start_line,
-            "type": "test" if func_info.is_test else ("method" if func_info.is_method else "function"),
-            "decorators": ", ".join(func_info.decorators) or "—",
-        })
+        results.append(
+            {
+                "fqn": fqn_str,
+                "file": str(func_info.filepath),
+                "line": func_info.start_line,
+                "type": (
+                    "test"
+                    if func_info.is_test
+                    else ("method" if func_info.is_method else "function")
+                ),
+                "decorators": ", ".join(func_info.decorators) or "—",
+            }
+        )
 
     return sorted(results, key=lambda r: r["fqn"])
 
@@ -220,7 +222,7 @@ def list_functions(config: AnalysisConfig) -> list[dict[str, Any]]:
 # ── Internal helpers ─────────────────────────────────────────────────────────
 
 
-def _module_to_file(module_path: str, project_root: Path) -> Optional[Path]:
+def _module_to_file(module_path: str, project_root: Path) -> Path | None:
     """Reverse-map a module dotpath to a file path."""
     parts = module_path.split(".")
     rel_path = Path(*parts)

@@ -9,10 +9,10 @@ class, by short name, and by dotpath prefix.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from blast_radius_mapper.logging_config import get_logger
-from blast_radius_mapper.models import ClassInfo, FQN, FunctionInfo
+from blast_radius_mapper.models import FQN, ClassInfo, FunctionInfo
 
 logger = get_logger("symbol_table")
 
@@ -73,7 +73,7 @@ class SymbolTable:
     def has_function(self, fqn_str: str) -> bool:
         return fqn_str in self._functions
 
-    def get_function(self, fqn_str: str) -> Optional[FunctionInfo]:
+    def get_function(self, fqn_str: str) -> FunctionInfo | None:
         return self._functions.get(fqn_str)
 
     def functions_in_module(self, module_path: str) -> list[FunctionInfo]:
@@ -97,7 +97,7 @@ class SymbolTable:
     def has_class(self, fqn_str: str) -> bool:
         return fqn_str in self._classes
 
-    def get_class(self, fqn_str: str) -> Optional[ClassInfo]:
+    def get_class(self, fqn_str: str) -> ClassInfo | None:
         return self._classes.get(fqn_str)
 
     def classes_in_module(self, module_path: str) -> list[ClassInfo]:
@@ -115,7 +115,7 @@ class SymbolTable:
 
     # ── Dotpath resolution ───────────────────────────────────────────────
 
-    def find_by_dotpath(self, dotpath: str) -> Optional[str]:
+    def find_by_dotpath(self, dotpath: str) -> str | None:
         """
         Try to resolve a dot-separated path to a known FQN string.
 
@@ -129,7 +129,7 @@ class SymbolTable:
 
     def find_class_by_name(
         self, name: str, module_path: str, import_aliases: dict[str, str]
-    ) -> Optional[ClassInfo]:
+    ) -> ClassInfo | None:
         """
         Resolve a class name using import aliases and module context.
 
@@ -251,21 +251,17 @@ class SymbolTable:
                 break
 
             # Find a good head
-            head: Optional[FQN] = None
+            head: FQN | None = None
             for lst in lists:
                 candidate = lst[0]
                 # Check candidate is not in the tail of any other list
-                in_tail = any(
-                    candidate in other[1:] for other in lists
-                )
+                in_tail = any(candidate in other[1:] for other in lists)
                 if not in_tail:
                     head = candidate
                     break
 
             if head is None:
-                raise ValueError(
-                    "Cannot compute C3 linearization — inconsistent hierarchy"
-                )
+                raise ValueError("Cannot compute C3 linearization — inconsistent hierarchy")
 
             result.append(head)
             # Remove head from all lists
@@ -277,9 +273,7 @@ class SymbolTable:
 
     # ── Method resolution via MRO ────────────────────────────────────────
 
-    def resolve_method_via_mro(
-        self, class_fqn_str: str, method_name: str
-    ) -> Optional[str]:
+    def resolve_method_via_mro(self, class_fqn_str: str, method_name: str) -> str | None:
         """
         Resolve ``self.method_name()`` by walking the class's MRO.
 

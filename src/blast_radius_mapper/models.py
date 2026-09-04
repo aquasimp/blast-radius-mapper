@@ -10,8 +10,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
-
 
 # ── FQN ──────────────────────────────────────────────────────────────────────
 
@@ -47,7 +45,7 @@ class FQN:
         return self.qualname.rsplit(".", maxsplit=1)[-1]
 
     @property
-    def class_qualname(self) -> Optional[str]:
+    def class_qualname(self) -> str | None:
         """Return the enclosing class qualname, or None if top-level function."""
         parts = self.qualname.rsplit(".", maxsplit=1)
         return parts[0] if len(parts) > 1 else None
@@ -130,13 +128,13 @@ class FunctionInfo:
     is_test: bool = False
     """True if function name starts with ``test_`` or is in a test file."""
 
-    class_fqn: Optional[FQN] = None
+    class_fqn: FQN | None = None
     """FQN of the enclosing class, if this is a method."""
 
     parameters: list[str] = field(default_factory=list)
     """Parameter names from the signature."""
 
-    docstring: Optional[str] = None
+    docstring: str | None = None
 
     @property
     def is_dunder(self) -> bool:
@@ -257,20 +255,37 @@ class AnalysisConfig:
     """Configuration for a single analysis run."""
 
     project_root: Path
-    target_function: Optional[str] = None
-    coverage_path: Optional[Path] = None
+    target_function: str | None = None
+    coverage_path: Path | None = None
     output_path: Path = Path("blast_radius.html")
-    json_output_path: Optional[Path] = None
+    json_output_path: Path | None = None
     max_depth: int = 50
     include_dead_code: bool = False
-    exclude_patterns: list[str] = field(default_factory=lambda: [
-        "__pycache__", ".git", ".venv", "venv", "node_modules",
-        ".tox", ".mypy_cache", ".pytest_cache", "dist", "build",
-        "*.egg-info",
-    ])
-    test_file_patterns: list[str] = field(default_factory=lambda: [
-        "test_*.py", "*_test.py", "tests.py",
-    ])
-    test_dir_patterns: list[str] = field(default_factory=lambda: [
-        "tests", "test",
-    ])
+    exclude_patterns: list[str] = field(
+        default_factory=lambda: [
+            "__pycache__",
+            ".git",
+            ".venv",
+            "venv",
+            "node_modules",
+            ".tox",
+            ".mypy_cache",
+            ".pytest_cache",
+            "dist",
+            "build",
+            "*.egg-info",
+        ]
+    )
+    test_file_patterns: list[str] = field(
+        default_factory=lambda: [
+            "test_*.py",
+            "*_test.py",
+            "tests.py",
+        ]
+    )
+    test_dir_patterns: list[str] = field(
+        default_factory=lambda: [
+            "tests",
+            "test",
+        ]
+    )

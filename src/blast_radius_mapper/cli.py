@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nError: {e}", file=sys.stderr)
         if getattr(args, "verbose", False):
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -69,22 +70,24 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to the Python project root directory",
     )
     analyze_parser.add_argument(
-        "--function", "-f",
+        "--function",
+        "-f",
         required=True,
         dest="target_function",
         help=(
-            "Fully qualified name of the function to analyze "
-            "(e.g. myproject.utils.helpers.retry)"
+            "Fully qualified name of the function to analyze (e.g. myproject.utils.helpers.retry)"
         ),
     )
     analyze_parser.add_argument(
-        "--coverage", "-c",
+        "--coverage",
+        "-c",
         type=Path,
         dest="coverage_path",
         help="Path to coverage.py JSON output (run: coverage json -o coverage.json)",
     )
     analyze_parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         default=Path("blast_radius.html"),
         dest="output_path",
@@ -108,7 +111,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Include dead code detection (secondary signal)",
     )
     analyze_parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Enable verbose/debug logging",
     )
@@ -130,7 +134,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output format (default: table)",
     )
     list_parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
     )
 
@@ -145,14 +150,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to the Python project root directory",
     )
     graph_parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         default=Path("full_graph.html"),
         dest="output_path",
         help="Output path for the HTML graph (default: full_graph.html)",
     )
     graph_parser.add_argument(
-        "--coverage", "-c",
+        "--coverage",
+        "-c",
         type=Path,
         dest="coverage_path",
         help="Path to coverage.py JSON output",
@@ -164,7 +171,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Maximum nodes to render (default: 1000)",
     )
     graph_parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
     )
 
@@ -177,7 +185,6 @@ def _build_parser() -> argparse.ArgumentParser:
 def _cmd_analyze(args: argparse.Namespace) -> int:
     """Execute the ``analyze`` command."""
     from blast_radius_mapper.pipeline import analyze_project
-    from blast_radius_mapper.scorer import score_breakdown, score_label
 
     config = AnalysisConfig(
         project_root=args.project_root,
@@ -194,7 +201,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
     # Print summary to stdout
     print()
     print("=" * 70)
-    print(f"  BLAST RADIUS ANALYSIS")
+    print("  BLAST RADIUS ANALYSIS")
     print("=" * 70)
     print(f"  Target:      {result.target}")
     print(f"  Confidence:  {result.confidence_score:.0%} - {result.risk_label}")
@@ -234,8 +241,9 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
 
 def _cmd_list(args: argparse.Namespace) -> int:
     """Execute the ``list`` command."""
-    from blast_radius_mapper.pipeline import list_functions
     import json as json_mod
+
+    from blast_radius_mapper.pipeline import list_functions
 
     config = AnalysisConfig(project_root=args.project_root)
     functions = list_functions(config)

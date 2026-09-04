@@ -16,6 +16,40 @@ from blast_radius_mapper.models import ImpactResult
 
 logger = get_logger("analyzer")
 
+_IMPLICIT_DUNDERS: set[str] = {
+    "__init__",
+    "__new__",
+    "__del__",
+    "__repr__",
+    "__str__",
+    "__hash__",
+    "__eq__",
+    "__ne__",
+    "__lt__",
+    "__le__",
+    "__gt__",
+    "__ge__",
+    "__bool__",
+    "__len__",
+    "__getitem__",
+    "__setitem__",
+    "__delitem__",
+    "__iter__",
+    "__next__",
+    "__contains__",
+    "__call__",
+    "__enter__",
+    "__exit__",
+    "__aenter__",
+    "__aexit__",
+    "__get__",
+    "__set__",
+    "__delete__",
+    "__init_subclass__",
+    "__class_getitem__",
+    "__post_init__",  # dataclasses
+}
+
 
 def trace_blast_radius(
     graph: nx.DiGraph,
@@ -115,18 +149,6 @@ def detect_dead_code(graph: nx.DiGraph) -> list[str]:
     Returns:
         List of FQN strings of potentially dead functions.
     """
-    # Dunder methods that Python calls implicitly
-    IMPLICIT_DUNDERS = {
-        "__init__", "__new__", "__del__", "__repr__", "__str__",
-        "__hash__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__",
-        "__bool__", "__len__", "__getitem__", "__setitem__", "__delitem__",
-        "__iter__", "__next__", "__contains__", "__call__",
-        "__enter__", "__exit__", "__aenter__", "__aexit__",
-        "__get__", "__set__", "__delete__",
-        "__init_subclass__", "__class_getitem__",
-        "__post_init__",  # dataclasses
-    }
-
     dead: list[str] = []
 
     for node in graph.nodes:
@@ -136,7 +158,7 @@ def detect_dead_code(graph: nx.DiGraph) -> list[str]:
 
         # Skip implicit dunders
         short_name = node.rsplit(".", maxsplit=1)[-1]
-        if short_name in IMPLICIT_DUNDERS:
+        if short_name in _IMPLICIT_DUNDERS:
             continue
 
         # Check for zero incoming edges
@@ -160,10 +182,7 @@ def find_covering_tests(
     This is structural coverage, not line-level coverage — it answers
     "which tests would break if this function's behavior changes?"
     """
-    test_nodes = [
-        n for n in graph.nodes
-        if graph.nodes[n].get("is_test", False)
-    ]
+    test_nodes = [n for n in graph.nodes if graph.nodes[n].get("is_test", False)]
 
     covering: list[str] = []
     for test_node in test_nodes:

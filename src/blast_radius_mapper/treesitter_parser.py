@@ -11,19 +11,19 @@ This is a **secondary** parser — the primary is always ``ast``.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 from blast_radius_mapper.logging_config import get_logger
-from blast_radius_mapper.models import ClassInfo, FQN, FunctionInfo
+from blast_radius_mapper.models import FQN, ClassInfo, FunctionInfo
 
 logger = get_logger("treesitter_parser")
 
 # Lazy-loaded tree-sitter objects
-_ts_parser = None
-_ts_language = None
+_ts_parser: Any = None
+_ts_language: Any = None
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """Lazily initialize the tree-sitter Python parser."""
     global _ts_parser, _ts_language
 
@@ -99,7 +99,7 @@ def parse_with_treesitter(
 
 
 def _walk_ts_tree(
-    node,
+    node: Any,
     module_path: str,
     filepath: Path,
     scope_stack: list[str],
@@ -125,9 +125,13 @@ def _walk_ts_tree(
 
                 scope_stack.append(name)
                 _walk_ts_tree(
-                    child, module_path, filepath, scope_stack,
+                    child,
+                    module_path,
+                    filepath,
+                    scope_stack,
                     parent_is_class=True,
-                    functions=functions, classes=classes,
+                    functions=functions,
+                    classes=classes,
                 )
                 scope_stack.pop()
 
@@ -149,9 +153,13 @@ def _walk_ts_tree(
 
                 scope_stack.append(name)
                 _walk_ts_tree(
-                    child, module_path, filepath, scope_stack,
+                    child,
+                    module_path,
+                    filepath,
+                    scope_stack,
                     parent_is_class=False,
-                    functions=functions, classes=classes,
+                    functions=functions,
+                    classes=classes,
                 )
                 scope_stack.pop()
 
@@ -159,15 +167,22 @@ def _walk_ts_tree(
             # Recurse into other compound statements
             if child.child_count > 0:
                 _walk_ts_tree(
-                    child, module_path, filepath, scope_stack,
+                    child,
+                    module_path,
+                    filepath,
+                    scope_stack,
                     parent_is_class=parent_is_class,
-                    functions=functions, classes=classes,
+                    functions=functions,
+                    classes=classes,
                 )
 
 
-def _ts_get_name(node) -> Optional[str]:
+def _ts_get_name(node: Any) -> str | None:
     """Extract the name identifier from a function/class definition node."""
     for child in node.children:
         if child.type == "identifier":
-            return child.text.decode("utf-8")
+            raw_text = child.text
+            if isinstance(raw_text, bytes):
+                return raw_text.decode("utf-8")
+            return str(raw_text)
     return None

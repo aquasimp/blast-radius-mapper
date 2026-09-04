@@ -7,10 +7,13 @@ from __future__ import annotations
 import ast
 import fnmatch
 from pathlib import Path
-from typing import Optional
 
 
-def is_test_file(filepath: Path, test_dir_patterns: list[str], test_file_patterns: list[str]) -> bool:
+def is_test_file(
+    filepath: Path,
+    test_dir_patterns: list[str],
+    test_file_patterns: list[str],
+) -> bool:
     """
     Determine if a file is a test file based on its path and name.
 
@@ -29,10 +32,7 @@ def is_test_file(filepath: Path, test_dir_patterns: list[str], test_file_pattern
 
     # Only check the immediate parent directory name
     parent_name = filepath.parent.name.lower()
-    if parent_name in [p.lower() for p in test_dir_patterns]:
-        return True
-
-    return False
+    return parent_name in [p.lower() for p in test_dir_patterns]
 
 
 def is_test_function(name: str) -> bool:
@@ -74,7 +74,7 @@ def _attribute_chain(node: ast.Attribute) -> list[str]:
     return parts
 
 
-def collect_attribute_chain(node: ast.expr) -> Optional[list[str]]:
+def collect_attribute_chain(node: ast.expr) -> list[str] | None:
     """
     Given an AST expression, collect the dotted attribute chain.
 
@@ -95,7 +95,7 @@ def collect_attribute_chain(node: ast.expr) -> Optional[list[str]]:
     return None
 
 
-def safe_parse(filepath: Path) -> Optional[ast.Module]:
+def safe_parse(filepath: Path) -> ast.Module | None:
     """
     Parse a Python file, returning None on failure instead of raising.
 

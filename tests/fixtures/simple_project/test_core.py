@@ -1,8 +1,9 @@
 """Tests for the simple project — verifies call-graph test coverage detection."""
 
+import contextlib
 
-from simple_project.core import process_data, validate
 from simple_project.api import handle_request
+from simple_project.core import process_data, validate
 
 
 def test_process_data():
@@ -12,10 +13,8 @@ def test_process_data():
 
 
 def test_validate_empty():
-    try:
+    with contextlib.suppress(ValueError):
         validate("")
-    except ValueError:
-        pass
 
 
 def test_handle_request():

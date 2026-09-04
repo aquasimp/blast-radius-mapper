@@ -9,12 +9,11 @@ builds a NetworkX DiGraph of caller → callee edges.
 from __future__ import annotations
 
 import ast
-from typing import Optional
 
 import networkx as nx
 
 from blast_radius_mapper.logging_config import get_logger
-from blast_radius_mapper.models import CallEdge, CallType, FQN, FunctionInfo
+from blast_radius_mapper.models import FQN, CallEdge, CallType, FunctionInfo
 from blast_radius_mapper.symbol_table import SymbolTable
 from blast_radius_mapper.utils import collect_attribute_chain
 
@@ -88,14 +87,14 @@ def build_call_graph(
 
 def _iter_function_nodes(
     tree: ast.Module, module_path: str
-) -> list[tuple[str, ast.FunctionDef]]:
+) -> list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]]:
     """
     Iterate all function/method definitions in an AST, yielding
     (qualname, node) pairs.
 
     Uses a scope stack to compute correct qualnames for nested definitions.
     """
-    results: list[tuple[str, ast.FunctionDef]] = []
+    results: list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]] = []
     _walk_for_functions(tree, [], results)
     return results
 
@@ -103,7 +102,7 @@ def _iter_function_nodes(
 def _walk_for_functions(
     node: ast.AST,
     scope_stack: list[str],
-    results: list[tuple[str, ast.FunctionDef]],
+    results: list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]],
 ) -> None:
     """Recursive walker that collects function nodes with their qualnames."""
     for child in ast.iter_child_nodes(node):
@@ -125,9 +124,9 @@ def _walk_for_functions(
 
 
 def _extract_calls_from_function(
-    func_node: ast.FunctionDef,
+    func_node: ast.FunctionDef | ast.AsyncFunctionDef,
     caller_fqn: FQN,
-    caller_info: Optional[FunctionInfo],
+    caller_info: FunctionInfo | None,
     module_path: str,
     import_aliases: dict[str, str],
     symbol_table: SymbolTable,
@@ -152,22 +151,26 @@ def _extract_calls_from_function(
         )
 
         if callee_fqn and call_type != CallType.UNRESOLVED:
-            edges.append(CallEdge(
-                caller=caller_fqn,
-                callee=callee_fqn,
-                call_type=call_type,
-                call_site_line=node.lineno,
-            ))
+            edges.append(
+                CallEdge(
+                    caller=caller_fqn,
+                    callee=callee_fqn,
+                    call_type=call_type,
+                    call_site_line=node.lineno,
+                )
+            )
         else:
             # Record unresolved for diagnostics
             unresolved_label = _call_label(node)
-            edges.append(CallEdge(
-                caller=caller_fqn,
-                callee=FQN("", f"UNRESOLVED:{unresolved_label}"),
-                call_type=CallType.UNRESOLVED,
-                call_site_line=node.lineno,
-                confidence=0.0,
-            ))
+            edges.append(
+                CallEdge(
+                    caller=caller_fqn,
+                    callee=FQN("", f"UNRESOLVED:{unresolved_label}"),
+                    call_type=CallType.UNRESOLVED,
+                    call_site_line=node.lineno,
+                    confidence=0.0,
+                )
+            )
 
     return edges
 
@@ -177,11 +180,11 @@ def _extract_calls_from_function(
 
 def _resolve_call(
     call_node: ast.Call,
-    caller_info: Optional[FunctionInfo],
+    caller_info: FunctionInfo | None,
     module_path: str,
     import_aliases: dict[str, str],
     symbol_table: SymbolTable,
-) -> tuple[Optional[FQN], CallType]:
+) -> tuple[FQN | None, CallType]:
     """
     Resolve an ``ast.Call`` node to a callee FQN.
 
@@ -193,14 +196,10 @@ def _resolve_call(
     func = call_node.func
 
     if isinstance(func, ast.Name):
-        return _resolve_simple_call(
-            func.id, module_path, import_aliases, symbol_table
-        )
+        return _resolve_simple_call(func.id, module_path, import_aliases, symbol_table)
 
     if isinstance(func, ast.Attribute):
-        return _resolve_attribute_call(
-            func, caller_info, module_path, import_aliases, symbol_table
-        )
+        return _resolve_attribute_call(func, caller_info, module_path, import_aliases, symbol_table)
 
     return None, CallType.UNRESOLVED
 
@@ -210,7 +209,7 @@ def _resolve_simple_call(
     module_path: str,
     import_aliases: dict[str, str],
     symbol_table: SymbolTable,
-) -> tuple[Optional[FQN], CallType]:
+) -> tuple[FQN | None, CallType]:
     """
     Resolve a simple call: ``foo()``.
 
@@ -270,11 +269,11 @@ def _resolve_simple_call(
 
 def _resolve_attribute_call(
     func: ast.Attribute,
-    caller_info: Optional[FunctionInfo],
+    caller_info: FunctionInfo | None,
     module_path: str,
     import_aliases: dict[str, str],
     symbol_table: SymbolTable,
-) -> tuple[Optional[FQN], CallType]:
+) -> tuple[FQN | None, CallType]:
     """
     Resolve a dotted call: ``obj.method()``, ``module.func()``, ``self.method()``.
 
@@ -294,9 +293,7 @@ def _resolve_attribute_call(
 
     # ── self.method() ────────────────────────────────────────────────
     if root == "self" and len(chain) == 2 and caller_info and caller_info.class_fqn:
-        resolved = symbol_table.resolve_method_via_mro(
-            caller_info.class_fqn.full, method_name
-        )
+        resolved = symbol_table.resolve_method_via_mro(caller_info.class_fqn.full, method_name)
         if resolved:
             func_info = symbol_table.get_function(resolved)
             if func_info:
@@ -305,9 +302,7 @@ def _resolve_attribute_call(
 
     # ── cls.method() ─────────────────────────────────────────────────
     if root == "cls" and len(chain) == 2 and caller_info and caller_info.class_fqn:
-        resolved = symbol_table.resolve_method_via_mro(
-            caller_info.class_fqn.full, method_name
-        )
+        resolved = symbol_table.resolve_method_via_mro(caller_info.class_fqn.full, method_name)
         if resolved:
             func_info = symbol_table.get_function(resolved)
             if func_info:
@@ -316,9 +311,7 @@ def _resolve_attribute_call(
 
     # ── super().method() ─────────────────────────────────────────────
     if root == "super" and len(chain) == 2:
-        return _resolve_super_call(
-            method_name, caller_info, symbol_table
-        )
+        return _resolve_super_call(method_name, caller_info, symbol_table)
 
     # ── Imported module.function() or module.Class.method() ──────────
     if root in import_aliases:
@@ -370,9 +363,9 @@ def _resolve_attribute_call(
 
 def _resolve_super_call(
     method_name: str,
-    caller_info: Optional[FunctionInfo],
+    caller_info: FunctionInfo | None,
     symbol_table: SymbolTable,
-) -> tuple[Optional[FQN], CallType]:
+) -> tuple[FQN | None, CallType]:
     """
     Resolve ``super().method()`` to the parent class method via MRO.
 

@@ -20,12 +20,12 @@ logger = get_logger("renderer")
 
 # ── Color palette ────────────────────────────────────────────────────────────
 
-COLOR_TARGET = "#e94560"        # Bright red — the function being changed
-COLOR_DIRECT_CALLER = "#ff8c42" # Orange — direct callers
-COLOR_TEST = "#4da6ff"          # Blue — test functions
-COLOR_EDGE_HIGH = "#888888"     # Solid gray — high confidence edge
-COLOR_EDGE_LOW = "#444444"      # Dim — low confidence edge
-COLOR_BG = "#1a1a2e"            # Dark background
+COLOR_TARGET = "#e94560"  # Bright red — the function being changed
+COLOR_DIRECT_CALLER = "#ff8c42"  # Orange — direct callers
+COLOR_TEST = "#4da6ff"  # Blue — test functions
+COLOR_EDGE_HIGH = "#888888"  # Solid gray — high confidence edge
+COLOR_EDGE_LOW = "#444444"  # Dim — low confidence edge
+COLOR_BG = "#1a1a2e"  # Dark background
 
 
 def render_blast_radius_graph(
@@ -71,17 +71,12 @@ def render_blast_radius_graph(
     # Limit node count for rendering performance
     if len(affected_nodes) > max_nodes:
         logger.warning(
-            "Blast radius has %d nodes, limiting to %d for rendering. "
-            "Use --max-nodes to increase.",
+            "Blast radius has %d nodes, limiting to %d for rendering. Use --max-nodes to increase.",
             len(affected_nodes),
             max_nodes,
         )
         # Keep target + direct callers + tests, then fill with closest dependents
-        priority = (
-            {impact.target}
-            | set(impact.direct_callers)
-            | set(impact.test_functions)
-        )
+        priority = {impact.target} | set(impact.direct_callers) | set(impact.test_functions)
         remaining = sorted(
             set(impact.transitive_dependents) - priority,
             key=lambda n: impact.depth_map.get(n, 999),
@@ -145,7 +140,8 @@ def render_blast_radius_graph(
         call_type = data.get("call_type", "unknown")
 
         net.add_edge(
-            u, v,
+            u,
+            v,
             color=edge_color,
             dashes=dashes,
             title=f"Type: {call_type} | Confidence: {conf:.0%}",
@@ -176,8 +172,7 @@ def render_full_graph(
 
     if graph.number_of_nodes() > max_nodes:
         logger.warning(
-            "Full graph has %d nodes, limiting to %d. "
-            "Use --max-nodes to increase.",
+            "Full graph has %d nodes, limiting to %d. Use --max-nodes to increase.",
             graph.number_of_nodes(),
             max_nodes,
         )
@@ -231,7 +226,8 @@ def render_full_graph(
     for u, v, data in graph.edges(data=True):
         conf = data.get("confidence", 1.0)
         net.add_edge(
-            u, v,
+            u,
+            v,
             color=COLOR_EDGE_HIGH if conf >= 0.8 else COLOR_EDGE_LOW,
             dashes=conf < 0.8,
             width=1.0,
@@ -279,12 +275,7 @@ def _build_tooltip(
 ) -> str:
     """Build an HTML tooltip for a graph node."""
     node_type = "Test" if node in test_set else "Source"
-    return (
-        f"<b>{node}</b><br>"
-        f"Depth: {depth}<br>"
-        f"Coverage: {coverage:.0%}<br>"
-        f"Type: {node_type}"
-    )
+    return f"<b>{node}</b><br>Depth: {depth}<br>Coverage: {coverage:.0%}<br>Type: {node_type}"
 
 
 def _inject_legend(net: Network, impact: ImpactResult) -> None:

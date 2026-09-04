@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from blast_radius_mapper.logging_config import get_logger
 from blast_radius_mapper.models import FunctionInfo
@@ -25,7 +25,7 @@ def load_coverage_data(coverage_path: Path) -> dict[str, Any]:
     Expected format (coverage.py >= 7.0)::
 
         {
-          "meta": {"version": "7.x", ...},
+          "meta": {"timestamp": "...", ...},
           "files": {
             "myproject/utils.py": {
               "executed_lines": [1, 2, 3],
@@ -47,20 +47,20 @@ def load_coverage_data(coverage_path: Path) -> dict[str, Any]:
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid coverage JSON: {e}") from e
 
+    if not isinstance(data, dict):
+        raise ValueError("Coverage JSON root must be a JSON object.")
+
     if "files" not in data:
-        raise ValueError(
-            "Coverage JSON missing 'files' key. "
-            "Run: coverage json -o coverage.json"
-        )
+        raise ValueError("Coverage JSON missing 'files' key. Run: coverage json -o coverage.json")
 
     # Check staleness
     meta = data.get("meta", {})
-    timestamp = meta.get("timestamp")
+    timestamp = meta.get("timestamp") if isinstance(meta, dict) else None
     if timestamp:
         logger.info("Coverage data timestamp: %s", timestamp)
 
     logger.info("Loaded coverage data for %d files", len(data["files"]))
-    return data
+    return cast(dict[str, Any], data)
 
 
 def compute_function_coverage(

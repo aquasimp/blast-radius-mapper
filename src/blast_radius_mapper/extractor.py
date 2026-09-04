@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from typing import Optional
 
 from blast_radius_mapper.logging_config import get_logger
-from blast_radius_mapper.models import ClassInfo, FQN, FunctionInfo
+from blast_radius_mapper.models import FQN, ClassInfo, FunctionInfo
 from blast_radius_mapper.utils import decorator_name, is_test_file, is_test_function
 
 logger = get_logger("extractor")
@@ -86,7 +85,6 @@ def _walk_scope(
     prefix is ``"MyClass.InnerClass"``.
     """
     for child in ast.iter_child_nodes(node):
-
         # ── Class definition ────────────────────────────────────────────
         if isinstance(child, ast.ClassDef):
             class_qualname = ".".join(scope_stack + [child.name])
@@ -127,10 +125,10 @@ def _walk_scope(
             is_method = parent_is_class
 
             # Build class FQN reference if this is a method
-            class_fqn: Optional[FQN] = None
+            parent_class_fqn: FQN | None = None
             if is_method and scope_stack:
                 class_qualname = ".".join(scope_stack)
-                class_fqn = FQN(module=module_path, qualname=class_qualname)
+                parent_class_fqn = FQN(module=module_path, qualname=class_qualname)
 
             func_info = FunctionInfo(
                 fqn=fqn,
@@ -143,15 +141,15 @@ def _walk_scope(
                 is_classmethod="classmethod" in dec_names,
                 is_property="property" in dec_names,
                 is_test=file_is_test or is_test_function(child.name),
-                class_fqn=class_fqn,
+                class_fqn=parent_class_fqn,
                 parameters=[arg.arg for arg in child.args.args],
                 docstring=ast.get_docstring(child),
             )
             functions.append(func_info)
 
             # If this is a method, register it on the class
-            if class_fqn:
-                _register_method_on_class(classes, class_fqn, fqn)
+            if parent_class_fqn:
+                _register_method_on_class(classes, parent_class_fqn, fqn)
 
             # Recurse into nested functions (they are real, but rare)
             scope_stack.append(child.name)
@@ -215,9 +213,7 @@ def _extract_base_names(class_node: ast.ClassDef) -> list[str]:
     return bases
 
 
-def _register_method_on_class(
-    classes: list[ClassInfo], class_fqn: FQN, method_fqn: FQN
-) -> None:
+def _register_method_on_class(classes: list[ClassInfo], class_fqn: FQN, method_fqn: FQN) -> None:
     """Add a method FQN to its parent ClassInfo's methods list."""
     for cls in reversed(classes):  # Most recent class is most likely the match
         if cls.fqn == class_fqn:

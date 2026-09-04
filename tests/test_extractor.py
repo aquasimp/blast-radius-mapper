@@ -29,7 +29,7 @@ def hello():
         assert not funcs[0].is_method
 
     def test_extracts_class_and_methods(self, tmp_path: Path):
-        source = '''
+        source = """
 class MyClass:
     def __init__(self):
         pass
@@ -44,7 +44,7 @@ class MyClass:
     @classmethod
     def class_method(cls):
         pass
-'''
+"""
         tree = ast.parse(source)
         funcs, classes = extract_definitions(
             filepath=tmp_path / "mod.py",
@@ -72,12 +72,12 @@ class MyClass:
                 assert f.is_classmethod
 
     def test_extracts_nested_class(self, tmp_path: Path):
-        source = '''
+        source = """
 class Outer:
     class Inner:
         def inner_method(self):
             pass
-'''
+"""
         tree = ast.parse(source)
         funcs, classes = extract_definitions(
             filepath=tmp_path / "mod.py",
@@ -97,13 +97,13 @@ class Outer:
         assert funcs[0].is_method
 
     def test_detects_test_function(self, tmp_path: Path):
-        source = '''
+        source = """
 def test_something():
     pass
 
 def helper():
     pass
-'''
+"""
         tree = ast.parse(source)
         funcs, _ = extract_definitions(
             filepath=tmp_path / "test_mod.py",
@@ -117,7 +117,7 @@ def helper():
         assert len(test_funcs) == 2  # Both are in a test file
 
     def test_extracts_base_classes(self, tmp_path: Path):
-        source = '''
+        source = """
 class Parent:
     pass
 
@@ -126,7 +126,7 @@ class Child(Parent):
 
 class MultiChild(Parent, object):
     pass
-'''
+"""
         tree = ast.parse(source)
         _, classes = extract_definitions(
             filepath=tmp_path / "mod.py",
@@ -144,10 +144,10 @@ class MultiChild(Parent, object):
         assert multi.base_names == ["Parent", "object"]
 
     def test_extracts_async_function(self, tmp_path: Path):
-        source = '''
+        source = """
 async def async_handler():
     pass
-'''
+"""
         tree = ast.parse(source)
         funcs, _ = extract_definitions(
             filepath=tmp_path / "mod.py",
@@ -161,7 +161,7 @@ async def async_handler():
         assert funcs[0].fqn.full == "mod.async_handler"
 
     def test_extracts_decorators(self, tmp_path: Path):
-        source = '''
+        source = """
 import functools
 
 @functools.lru_cache
@@ -171,7 +171,7 @@ def cached():
 @property
 def prop(self):
     pass
-'''
+"""
         tree = ast.parse(source)
         funcs, _ = extract_definitions(
             filepath=tmp_path / "mod.py",

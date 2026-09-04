@@ -83,9 +83,7 @@ def filepath_to_module(filepath: Path, project_root: Path) -> str:
     try:
         rel = filepath.relative_to(project_root)
     except ValueError:
-        raise ValueError(
-            f"File {filepath} is not under project root {project_root}"
-        ) from None
+        raise ValueError(f"File {filepath} is not under project root {project_root}") from None
 
     parts = list(rel.parts)
 

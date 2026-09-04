@@ -63,9 +63,7 @@ def compute_confidence(
 
     # Factor 2: Average dependent coverage
     if impact.transitive_dependents:
-        dep_coverages = [
-            coverage_map.get(d, 0.0) for d in impact.transitive_dependents
-        ]
+        dep_coverages = [coverage_map.get(d, 0.0) for d in impact.transitive_dependents]
         avg_dep_cov = sum(dep_coverages) / len(dep_coverages)
     else:
         # No dependents = isolated function = safe
@@ -76,10 +74,7 @@ def compute_confidence(
     fan_out_score = 1.0 / math.log2(fan_out + 2)
 
     # Factor 4: Depth penalty
-    if impact.depth_map:
-        max_depth = max(impact.depth_map.values())
-    else:
-        max_depth = 0
+    max_depth = max(impact.depth_map.values()) if impact.depth_map else 0
     depth_score = 1.0 / math.log2(max_depth + 2)
 
     # Factor 5: Test reachability ratio

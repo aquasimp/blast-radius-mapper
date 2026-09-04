@@ -1,8 +1,9 @@
 """Tests for the symbol table and C3 MRO computation."""
 
-from blast_radius_mapper.models import ClassInfo, FQN, FunctionInfo
-from blast_radius_mapper.symbol_table import SymbolTable
 from pathlib import Path
+
+from blast_radius_mapper.models import FQN, ClassInfo, FunctionInfo
+from blast_radius_mapper.symbol_table import SymbolTable
 
 
 class TestSymbolTable:
