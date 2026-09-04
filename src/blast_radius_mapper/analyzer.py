@@ -199,7 +199,3 @@ def find_covering_tests(
         target_fqn,
     )
     return covering
-
-
-# Backwards-compatible alias
-find_dead_code = detect_dead_code

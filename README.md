@@ -364,12 +364,12 @@ blast-radius graph <project_root> [-o output.html] [-c coverage.json] [--max-nod
 
 Blast Radius Mapper is engineered for fast, sub-second feedback in developer workflows and CI pre-merge checks. Benchmarks run locally across synthesized multi-module Python repositories:
 
-| Project Scale | Modules | Functions Indexed | E2E Pipeline Latency | Time Complexity |
-|:---|:---:|:---:|:---:|:---:|
-| **Small** | 5 | ~50 | ~50 ms | $O(V + E)$ |
-| **Medium** | 15 | ~300 | ~255 ms | $O(V + E)$ |
-| **Large** | 30 | ~1,050 | ~416 ms | $O(V + E)$ |
-| **Enterprise** | 50 | ~3,000 | ~688 ms | $O(V + E)$ |
+| Project Scale | Modules | Functions Indexed | Transitive Dependents | E2E Pipeline Latency | Time Complexity |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **Small** | 5 | ~50 | 55 | ~51 ms | $O(V + E)$ |
+| **Medium** | 15 | ~300 | 315 | ~206 ms | $O(V + E)$ |
+| **Large** | 30 | ~1,050 | 1,080 | ~488 ms | $O(V + E)$ |
+| **Enterprise** | 50 | ~3,000 | 2,500 | ~1.10 s | $O(V + E)$ |
 
 *Run the benchmark suite locally:*
 ```bash

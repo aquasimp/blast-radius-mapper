@@ -1,4 +1,4 @@
-﻿"""Unit tests for blast radius analyzer -- cycles, dead code, and test coverage."""
+"""Unit tests for blast radius analyzer -- cycles, dead code, and test coverage."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import networkx as nx
 from blast_radius_mapper.analyzer import (
     detect_dead_code,
     find_covering_tests,
-    find_dead_code,
     trace_blast_radius,
 )
 
@@ -82,15 +81,12 @@ class TestDeadCodeDetection:
         # Test function -> should NOT be flagged as dead
         graph.add_node("tests.test_mod.test_case", is_test=True)
 
-        dead = find_dead_code(graph)
+        dead = detect_dead_code(graph)
         assert "pkg.mod.orphan_func" in dead
         assert "pkg.mod.User.__init__" not in dead
         assert "pkg.mod.User.__repr__" not in dead
         assert "pkg.mod.Context.__enter__" not in dead
         assert "tests.test_mod.test_case" not in dead
-
-        dead_detected = detect_dead_code(graph)
-        assert dead_detected == dead
 
 
 class TestCoveringTests:
